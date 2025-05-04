@@ -1,0 +1,70 @@
+basePath: /
+definitions:
+  dto.ChargebackRequest:
+    properties:
+      reason:
+        type: string
+      transaction_id:
+        type: string
+      user_id:
+        type: string
+    required:
+    - reason
+    - transaction_id
+    - user_id
+    type: object
+  presentation.JSONResponse:
+    properties:
+      data: {}
+      error:
+        type: boolean
+      message:
+        type: string
+    type: object
+host: localhost:8081
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is Chargeback API. Is possible to open a new chargeback.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Authentication Service API
+  version: "1.0"
+paths:
+  /customer:
+    post:
+      consumes:
+      - application/json
+      description: Verify if the chargeback exists using idempotency with user id
+        and transaction id. Case not exists send a message to the RabbitMQ for create
+        a new chargeback in the processor.
+      parameters:
+      - description: Data of the chargeback
+        in: body
+        name: chargeback
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ChargebackRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/presentation.JSONResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/presentation.JSONResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/presentation.JSONResponse'
+      summary: Create a chargeback
+      tags:
+      - chargeback
+swagger: "2.0"
