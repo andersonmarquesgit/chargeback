@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -10,7 +11,6 @@ type Config struct {
 	Server          ServerConfig
 	Database        DatabaseConfig
 	RabbitMQ        RabbitMQConfig
-	Logger          LoggerConfig
 	SecretKeyConfig SecretKeyConfig
 	NewRelic        NewRelicConfig
 }
@@ -22,7 +22,8 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	DSN string
+	CassandraHosts []string
+	Keyspace       string
 }
 
 type LoggerConfig struct {
@@ -49,13 +50,11 @@ func LoadConfig() *Config {
 			WriteTimeout: getEnvAsDuration("SERVER_WRITE_TIMEOUT", 15*time.Second),
 		},
 		Database: DatabaseConfig{
-			DSN: getEnv("DSN", "host=users.c0xiiyew0bah.us-east-1.rds.amazonaws.com port=5432 user=users password=userswellpass dbname=users sslmode=require timezone=UTC connect_timeout=5"),
-		},
-		Logger: LoggerConfig{
-			URL: getEnv("LOGGER_URL", "http://logger-service/log"),
+			CassandraHosts: strings.Split(getEnv("CASSANDRA_HOSTS", "127.0.0.1"), ","),
+			Keyspace:       getEnv("CASSANDRA_KEYSPACE", "chargebacks"),
 		},
 		RabbitMQ: RabbitMQConfig{
-			URL: getEnv("RABBITMQ_URL", "amqps://eirxeetr:S6jkk12c9SEoZoUuv7GoVgszBIkrhkbL@possum.lmq.cloudamqp.com/eirxeetr"),
+			URL: getEnv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq"),
 		},
 		SecretKeyConfig: SecretKeyConfig{
 			SecretKey: []byte(getEnv("SECRET_KEY", "YSLjuEHpQIgYVaqOPo3Xxmq1iEhJ6msAdy0wO4yMWMbuGq8kGpDIeHDx99mW4smiFBPTSHIBE6NnMEBbAC2VJQ==")),
