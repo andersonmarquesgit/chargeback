@@ -7,8 +7,8 @@ CREATE KEYSPACE IF NOT EXISTS chargebacks
 USE chargebacks;
 
 CREATE TABLE IF NOT EXISTS chargebacks_by_user_transaction (
-    user_id UUID,
-    transaction_id UUID,
+    user_id TEXT,
+    transaction_id TEXT,
     status TEXT,
     reason TEXT,
     file_id UUID,

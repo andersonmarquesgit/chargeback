@@ -54,13 +54,13 @@ func LoadConfig() *Config {
 			Keyspace:       getEnv("CASSANDRA_KEYSPACE", "chargebacks"),
 		},
 		RabbitMQ: RabbitMQConfig{
-			URL: getEnv("RABBITMQ_URL", "amqps://eirxeetr:S6jkk12c9SEoZoUuv7GoVgszBIkrhkbL@possum.lmq.cloudamqp.com/eirxeetr"),
+			URL: getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672"),
 		},
 		SecretKeyConfig: SecretKeyConfig{
 			SecretKey: []byte(getEnv("SECRET_KEY", "YSLjuEHpQIgYVaqOPo3Xxmq1iEhJ6msAdy0wO4yMWMbuGq8kGpDIeHDx99mW4smiFBPTSHIBE6NnMEBbAC2VJQ==")),
 		},
 		NewRelic: NewRelicConfig{
-			LicenseKey: getEnv("NEW_RELIC_LICENSE_KEY", "a6c3120d4675abbb00eb86403160f723FFFFNRAL"),
+			LicenseKey: getEnv("NEW_RELIC_LICENSE_KEY", ""),
 		},
 	}
 }

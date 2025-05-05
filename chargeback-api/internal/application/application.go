@@ -2,10 +2,10 @@ package application
 
 import (
 	"api/internal/config"
-	"api/internal/infrastructure/db"
 	"api/internal/infrastructure/logging"
 	"api/internal/infrastructure/rabbitmq"
 	"api/internal/infrastructure/rabbitmq/producers"
+	"api/internal/infrastructure/repositories/cassandra"
 	"api/internal/interfaces/http/handlers"
 	"api/internal/usecases"
 	"github.com/gocql/gocql"
@@ -40,7 +40,7 @@ func NewApplication(cfg *config.Config) *Application {
 	logging.Logger.Info("Application started with New Relic integration")
 
 	// Connect to database
-	cassandraSession := db.NewCassandraSession(cfg.Database)
+	cassandraSession := config.NewCassandraSession(cfg.Database)
 
 	// Connect to RabbitMQ
 	rabbitConn, err := rabbitmq.Connect(cfg.RabbitMQ.URL)
@@ -55,10 +55,10 @@ func NewApplication(cfg *config.Config) *Application {
 	}
 
 	// Initialize repositories
-	//customerRepo := db.NewCustomerRepository(dbConn)
+	chargebackRepository := cassandra.NewChargebackRepositoryCassandra(cassandraSession)
 
 	// Initialize use cases
-	chargebackUseCase := usecases.NewChargebackOpenedUseCase(producers.ChargebackOpenedProducer)
+	chargebackUseCase := usecases.NewChargebackOpenedUseCase(chargebackRepository, producers.ChargebackOpenedProducer)
 	useCases := usecases.NewUseCases(chargebackUseCase)
 
 	// Initialize specific handlers

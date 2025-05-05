@@ -29,7 +29,7 @@ func NewChargebackOpenedHandler(chargebackOpenedUseCase *usecases.ChargebackOpen
 // @Accept json
 // @Produce json
 // @Param chargeback body dto.ChargebackRequest true "Data of the chargeback"
-// @Success 201 {object} presentation.JSONResponse
+// @Success 202 {object} presentation.JSONResponse
 // @Failure 400 {object} presentation.JSONResponse
 // @Failure 500 {object} presentation.JSONResponse
 // @Router /customer [post]
@@ -52,16 +52,16 @@ func (h *ChargebackOpenedHandler) CreateChargeback(w http.ResponseWriter, r *htt
 	traceID := r.Context().Value("request-trace-id").(string)
 
 	// Create chargeback
-	chargeback, err := h.chargebackOpenedUseCase.CreateChargeback(req, traceID)
+	_, err := h.chargebackOpenedUseCase.CreateChargeback(req, traceID)
 	if err != nil {
 		presentation.ErrorJSON(w, err, http.StatusInternalServerError)
 		return
 	}
 
-	// Return the chargeback created
-	presentation.WriteJSON(w, http.StatusCreated, presentation.JSONResponse{
+	// Return the chargeback send to processor
+	presentation.WriteJSON(w, http.StatusAccepted, presentation.JSONResponse{
 		Error:   false,
-		Message: "Chargeback created successfully",
-		Data:    chargeback,
+		Message: "Chargeback send to processor with successfully",
+		Data:    nil,
 	})
 }

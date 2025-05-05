@@ -5,7 +5,6 @@ import (
 )
 
 type Chargeback struct {
-	ChargebackID  string    `json:"chargeback_id"`
 	Status        string    `json:"status"`
 	UserID        string    `json:"user_id"`
 	TransactionID string    `json:"transaction_id"`
@@ -16,7 +15,6 @@ type Chargeback struct {
 
 func NewChargeback(userID, transactionID, reason string) *Chargeback {
 	return &Chargeback{
-		ChargebackID:  userID + transactionID,
 		Status:        "pending",
 		UserID:        userID,
 		TransactionID: transactionID,
