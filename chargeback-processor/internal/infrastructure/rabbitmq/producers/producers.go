@@ -1,8 +1,8 @@
 package producers
 
 import (
-	"api/internal/infrastructure/rabbitmq"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"processor/internal/infrastructure/rabbitmq"
 )
 
 type Producer struct {
@@ -12,18 +12,18 @@ type Producer struct {
 }
 
 type Producers struct {
-	ChargebackOpenedProducer *Producer
+	ChargebackBatchProducer *Producer
 	// Add more producers here
 }
 
 func NewProducers(conn *amqp.Connection) (*Producers, error) {
-	chargebackOpenedProducer, err := NewChargebackOpenedProducer(conn)
+	chargebackBatchProducer, err := NewChargebackBatchProducer(conn)
 	if err != nil {
 		return nil, err
 	}
 
 	return &Producers{
-		ChargebackOpenedProducer: chargebackOpenedProducer,
+		ChargebackBatchProducer: chargebackBatchProducer,
 	}, nil
 }
 

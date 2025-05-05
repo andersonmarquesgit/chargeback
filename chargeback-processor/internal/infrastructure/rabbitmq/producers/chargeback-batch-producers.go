@@ -1,16 +1,16 @@
 package producers
 
 import (
-	"api/internal/infrastructure/logging"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"processor/internal/infrastructure/logging"
 )
 
-func NewChargebackOpenedProducer(conn *amqp.Connection) (*Producer, error) {
+func NewChargebackBatchProducer(conn *amqp.Connection) (*Producer, error) {
 	producer := Producer{
 		Connection:  conn,
-		Exchange:    "chargeback-opened-exchange",
-		QueueSuffix: "chargeback.opened",
+		Exchange:    "chargeback-batch-exchange",
+		QueueSuffix: "chargeback.batch",
 	}
 
 	err := producer.setup("topic")
@@ -21,7 +21,7 @@ func NewChargebackOpenedProducer(conn *amqp.Connection) (*Producer, error) {
 	return &producer, nil
 }
 
-func (p *Producer) PublishChargebackOpenedEvent(message []byte, userID, transactionID, traceID string) error {
+func (p *Producer) PublishChargebackBatchEvent(message []byte, traceID string) error {
 	channel, err := p.Connection.Channel()
 	if err != nil {
 		return err
@@ -29,7 +29,7 @@ func (p *Producer) PublishChargebackOpenedEvent(message []byte, userID, transact
 	defer channel.Close()
 
 	routingKey := ""
-	logging.Infof("Publishing chargeback opened event to topic: %s", p.Exchange)
+	logging.Infof("Publishing chargeback batch event to topic: %s", p.Exchange)
 
 	err = channel.Publish(
 		p.Exchange, // exchange
@@ -41,15 +41,13 @@ func (p *Producer) PublishChargebackOpenedEvent(message []byte, userID, transact
 			ContentType:  "application/json",
 			Body:         message,
 			Headers: amqp.Table{
-				"event":            "chargeback-opened",
-				"user-id":          userID,
-				"transaction-id":   transactionID,
+				"event":            "chargeback-batch",
 				"request-trace-id": traceID,
 			},
 		},
 	)
 	if err != nil {
-		return fmt.Errorf("failed to publish chargeback opened event: %w", err)
+		return fmt.Errorf("failed to publish chargeback batch event: %w", err)
 	}
 
 	return nil

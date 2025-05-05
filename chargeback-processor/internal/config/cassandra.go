@@ -1,13 +1,12 @@
-package db
+package config
 
 import (
 	"github.com/gocql/gocql"
 	"log"
-	"processor/internal/config"
 	"time"
 )
 
-func NewCassandraSession(cfg config.DatabaseConfig) *gocql.Session {
+func NewCassandraSession(cfg DatabaseConfig) *gocql.Session {
 	cluster := gocql.NewCluster(cfg.CassandraHosts...)
 	cluster.Keyspace = cfg.Keyspace
 	cluster.Consistency = gocql.Quorum

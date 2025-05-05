@@ -11,6 +11,7 @@ type Config struct {
 	Server          ServerConfig
 	Database        DatabaseConfig
 	RabbitMQ        RabbitMQConfig
+	Logger          LoggerConfig
 	SecretKeyConfig SecretKeyConfig
 	NewRelic        NewRelicConfig
 }
@@ -45,7 +46,7 @@ type NewRelicConfig struct {
 func LoadConfig() *Config {
 	return &Config{
 		Server: ServerConfig{
-			Port:         getEnv("SERVER_PORT", "80"),
+			Port:         getEnv("SERVER_PORT", "81"),
 			ReadTimeout:  getEnvAsDuration("SERVER_READ_TIMEOUT", 15*time.Second),
 			WriteTimeout: getEnvAsDuration("SERVER_WRITE_TIMEOUT", 15*time.Second),
 		},
@@ -54,13 +55,13 @@ func LoadConfig() *Config {
 			Keyspace:       getEnv("CASSANDRA_KEYSPACE", "chargebacks"),
 		},
 		RabbitMQ: RabbitMQConfig{
-			URL: getEnv("RABBITMQ_URL", "amqp://guest:guest@rabbitmq"),
+			URL: getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672"),
 		},
 		SecretKeyConfig: SecretKeyConfig{
 			SecretKey: []byte(getEnv("SECRET_KEY", "YSLjuEHpQIgYVaqOPo3Xxmq1iEhJ6msAdy0wO4yMWMbuGq8kGpDIeHDx99mW4smiFBPTSHIBE6NnMEBbAC2VJQ==")),
 		},
 		NewRelic: NewRelicConfig{
-			LicenseKey: getEnv("NEW_RELIC_LICENSE_KEY", "a6c3120d4675abbb00eb86403160f723FFFFNRAL"),
+			LicenseKey: getEnv("NEW_RELIC_LICENSE_KEY", ""),
 		},
 	}
 }
