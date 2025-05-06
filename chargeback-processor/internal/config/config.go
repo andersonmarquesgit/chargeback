@@ -15,6 +15,7 @@ type Config struct {
 	SecretKeyConfig SecretKeyConfig
 	NewRelic        NewRelicConfig
 	Chargeback      ChargebackConfig
+	Minio           MinioConfig
 }
 
 type ServerConfig struct {
@@ -50,6 +51,14 @@ type ChargebackConfig struct {
 	MaxDuration time.Duration
 }
 
+type MinioConfig struct {
+	AccessKey  string
+	SecretKey  string
+	BucketName string
+	Endpoint   string
+	UseSSL     bool
+}
+
 func LoadConfig() *Config {
 	return &Config{
 		Server: ServerConfig{
@@ -72,8 +81,15 @@ func LoadConfig() *Config {
 		},
 		Chargeback: ChargebackConfig{
 			OutputDir:   getEnv("CHARGEBACK_OUTPUT_DIR", "/tmp/chargebacks"),
-			MaxDuration: 5 * time.Hour,
-			MaxRecords:  100,
+			MaxDuration: 30 * time.Second,
+			MaxRecords:  5,
+		},
+		Minio: MinioConfig{
+			Endpoint:   getEnv("MINIO_ENDPOINT", "localhost:9000"),
+			AccessKey:  getEnv("MINIO_ACCESS_KEY", "admin"),
+			SecretKey:  getEnv("MINIO_SECRET_KEY", "password"),
+			UseSSL:     false, // ou converter com strconv.ParseBool
+			BucketName: getEnv("MINIO_BUCKET_NAME", "chargebacks"),
 		},
 	}
 }

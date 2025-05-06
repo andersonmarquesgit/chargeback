@@ -8,6 +8,7 @@ import (
 	"processor/internal/config"
 	"processor/internal/infrastructure/filewriter"
 	"processor/internal/infrastructure/logging"
+	"processor/internal/infrastructure/objectstorage/minio"
 	"processor/internal/infrastructure/rabbitmq"
 	"processor/internal/infrastructure/rabbitmq/consumers"
 	"processor/internal/infrastructure/rabbitmq/producers"
@@ -57,11 +58,23 @@ func NewApplication(cfg *config.Config) *Application {
 		log.Fatalf("Could not create RabbitMQ producers: %v", err)
 	}
 
+	// Initialize file uploader
+	chargebackUploader, err := minio.NewChargebackUploader(
+		cfg.Minio.Endpoint,
+		cfg.Minio.AccessKey,
+		cfg.Minio.SecretKey,
+		cfg.Minio.BucketName,
+		cfg.Minio.UseSSL,
+	)
+	if err != nil {
+		log.Fatalf("Could not initialize uploader: %v", err)
+	}
+
 	// Initialize repositories
 	chargebackRepository := cassandra.NewChargebackRepositoryCassandra(cassandraSession)
 
 	// Initialize writer
-	chargebackWriter := filewriter.NewChargebackWriter("/tmp/chargebacks", cfg.Chargeback.MaxRecords, cfg.Chargeback.MaxDuration)
+	chargebackWriter := filewriter.NewChargebackWriter("/tmp/chargebacks", cfg.Chargeback.MaxRecords, cfg.Chargeback.MaxDuration, &chargebackUploader)
 
 	// Initializer use cases
 	chargebackOpenedEventUseCase := usecases.NewChargebackOpenedEventUseCase(chargebackRepository, chargebackWriter)

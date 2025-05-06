@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"processor/internal/domain/models"
+	"processor/internal/infrastructure/objectstorage"
 	"sync"
 	"time"
 )
@@ -19,15 +20,17 @@ type ChargebackWriter struct {
 	maxRecords    int
 	maxDuration   time.Duration
 	directory     string
+	uploader      objectstorage.Uploader
 }
 
-func NewChargebackWriter(directory string, maxRecords int, maxDuration time.Duration) *ChargebackWriter {
+func NewChargebackWriter(directory string, maxRecords int, maxDuration time.Duration, uploader *objectstorage.Uploader) *ChargebackWriter {
 	return &ChargebackWriter{
 		records:     make([]models.Chargeback, 0),
 		maxRecords:  maxRecords,
 		maxDuration: maxDuration,
 		directory:   directory,
 		lastFlush:   time.Now(),
+		uploader:    *uploader,
 	}
 }
 
@@ -62,16 +65,22 @@ func (w *ChargebackWriter) Write(cb models.Chargeback) (string, error) {
 }
 
 func (w *ChargebackWriter) rotateFile() error {
+	// Se existir um arquivo atual, faz upload para o MinIO antes de criar o novo
 	if w.currentFile != nil {
 		w.currentFile.Close()
+
+		fullPath := filepath.Join(w.directory, w.currentFileID)
+		if err := w.uploader.UploadFile(fullPath, w.currentFileID); err != nil {
+			return fmt.Errorf("failed to upload chargeback file to object storage: %w", err)
+		}
 	}
 
 	// Garante que o diretório existe
-	err := os.MkdirAll(w.directory, 0755)
-	if err != nil {
+	if err := os.MkdirAll(w.directory, 0755); err != nil {
 		return fmt.Errorf("could not create output directory %s: %w", w.directory, err)
 	}
 
+	// Cria um novo arquivo com timestamp único
 	filename := fmt.Sprintf("cb_batch_%d.ndjson", time.Now().UnixNano())
 	fullPath := filepath.Join(w.directory, filename)
 
@@ -80,9 +89,11 @@ func (w *ChargebackWriter) rotateFile() error {
 		return fmt.Errorf("could not create file %s: %w", fullPath, err)
 	}
 
+	// Atualiza estado interno do writer
 	w.currentFile = file
 	w.currentFileID = filename
 	w.records = make([]models.Chargeback, 0)
 	w.lastFlush = time.Now()
+
 	return nil
 }

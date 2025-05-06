@@ -17,7 +17,7 @@ type ChargebackOpenedEvent struct {
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
-// NewUserUpsertEvent cria um novo ChargebackOpenedEvent a partir de um Chargeback model
+// NewChargebackOpenedEvent cria um novo ChargebackOpenedEvent a partir de um Chargeback model
 func NewChargebackOpenedEvent(chargeback *models.Chargeback) (*ChargebackOpenedEvent, error) {
 	return &ChargebackOpenedEvent{
 		UserID:        chargeback.UserID,
