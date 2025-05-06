@@ -76,6 +76,19 @@ func NewApplication(cfg *config.Config) *Application {
 	// Initialize writer
 	chargebackWriter := filewriter.NewChargebackWriter("/tmp/chargebacks", cfg.Chargeback.MaxRecords, cfg.Chargeback.MaxDuration, chargebackUploader, producers.ChargebackBatchProducer)
 
+	// Start background flush monitor for last files lost
+	go func() {
+		ticker := time.NewTicker(cfg.Chargeback.MaxDuration)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				chargebackWriter.MaybeFlush()
+			}
+		}
+	}()
+
 	// Initializer use cases
 	chargebackOpenedEventUseCase := usecases.NewChargebackOpenedEventUseCase(chargebackRepository, chargebackWriter)
 	useCases := usecases.NewUseCases(chargebackOpenedEventUseCase)

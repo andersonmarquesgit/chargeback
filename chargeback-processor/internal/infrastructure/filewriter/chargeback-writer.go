@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"processor/internal/domain/models"
+	"processor/internal/infrastructure/logging"
 	"processor/internal/infrastructure/objectstorage"
 	"processor/internal/infrastructure/rabbitmq/producers"
 	"sync"
@@ -69,8 +70,14 @@ func (w *ChargebackWriter) Write(cb models.Chargeback) (string, error) {
 }
 
 func (w *ChargebackWriter) rotateFile() error {
+	var prevFileID string
+	var recordCount int
+
 	// Se existir um arquivo atual, faz upload para o MinIO antes de criar o novo
 	if w.currentFile != nil {
+		prevFileID = w.currentFileID
+		recordCount = len(w.records)
+
 		w.currentFile.Close()
 
 		fullPath := filepath.Join(w.directory, w.currentFileID)
@@ -81,6 +88,8 @@ func (w *ChargebackWriter) rotateFile() error {
 		if err := w.notifyBatchReady(w.currentFileID, len(w.records)); err != nil {
 			return fmt.Errorf("failed to publish batch ready event: %w", err)
 		}
+
+		logging.Infof("Rotating file with %d records: %s", recordCount, prevFileID)
 	}
 
 	// Garante que o diretório existe
@@ -121,4 +130,17 @@ func (w *ChargebackWriter) notifyBatchReady(fileID string, recordCount int) erro
 
 	traceID := uuid.NewString()
 	return w.batchEventProducer.PublishChargebackBatchEvent(payload, traceID)
+}
+
+func (w *ChargebackWriter) MaybeFlush() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+
+	if len(w.records) == 0 || w.currentFile == nil {
+		return
+	}
+
+	if time.Since(w.lastFlush) >= w.maxDuration {
+		_ = w.rotateFile()
+	}
 }
