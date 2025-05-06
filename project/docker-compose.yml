@@ -5,7 +5,7 @@ services:
     ports:
       - "9042:9042"
     volumes:
-      - ./project/db-init:/docker-entrypoint-initdb.d
+      - ./db-init/cassandra:/docker-entrypoint-initdb.d
     environment:
       - CASSANDRA_CLUSTER_NAME=chargeback-cluster
       - CASSANDRA_DC=datacenter1
@@ -41,6 +41,20 @@ services:
     volumes:
       - minio-data:/data
 
+  batch-files:
+    image: postgres:15
+    container_name: batch-files
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: batch
+    volumes:
+      - batch_files_data:/var/lib/postgresql/data
+      - ./db-init/postgres/schema.sql:/docker-entrypoint-initdb.d/init.sql
+
 #  chargeback-api:
 #    build:
 #      context: ./../chargeback-api
@@ -66,3 +80,4 @@ volumes:
   cassandra-data:
   rabbitmq-data:
   minio-data:
+  batch_files_data:

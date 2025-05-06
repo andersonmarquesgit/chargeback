@@ -74,7 +74,7 @@ func NewApplication(cfg *config.Config) *Application {
 	chargebackRepository := cassandra.NewChargebackRepositoryCassandra(cassandraSession)
 
 	// Initialize writer
-	chargebackWriter := filewriter.NewChargebackWriter("/tmp/chargebacks", cfg.Chargeback.MaxRecords, cfg.Chargeback.MaxDuration, &chargebackUploader)
+	chargebackWriter := filewriter.NewChargebackWriter("/tmp/chargebacks", cfg.Chargeback.MaxRecords, cfg.Chargeback.MaxDuration, chargebackUploader, producers.ChargebackBatchProducer)
 
 	// Initializer use cases
 	chargebackOpenedEventUseCase := usecases.NewChargebackOpenedEventUseCase(chargebackRepository, chargebackWriter)

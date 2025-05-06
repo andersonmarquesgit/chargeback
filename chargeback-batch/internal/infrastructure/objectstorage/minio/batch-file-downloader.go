@@ -1,21 +1,22 @@
 package minio
 
 import (
+	"batch/internal/infrastructure/objectstorage"
 	"context"
 	"fmt"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"io"
 	"log"
 	"os"
-	"processor/internal/infrastructure/objectstorage"
 )
 
-type ChargebackUploader struct {
+type BatchFileDownloader struct {
 	client     *minio.Client
 	bucketName string
 }
 
-func NewChargebackUploader(endpoint, accessKey, secretKey, bucketName string, useSSL bool) (objectstorage.Uploader, error) {
+func NewBatchFileDownloader(endpoint, accessKey, secretKey, bucketName string, useSSL bool) (objectstorage.Downloader, error) {
 	client, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: useSSL,
@@ -40,36 +41,33 @@ func NewChargebackUploader(endpoint, accessKey, secretKey, bucketName string, us
 	}
 
 	log.Printf("Bucket %s connect successfully.", bucketName)
-	return &ChargebackUploader{
+	return &BatchFileDownloader{
 		client:     client,
 		bucketName: bucketName,
 	}, nil
 }
 
-func (cbu *ChargebackUploader) UploadFile(localPath string, objectName string) error {
+func (cbu *BatchFileDownloader) DownloadFile(localPath string, objectName string) error {
 	ctx := context.Background()
 
-	file, err := os.Open(localPath)
+	object, err := cbu.client.GetObject(ctx, cbu.bucketName, objectName, minio.GetObjectOptions{})
 	if err != nil {
-		return fmt.Errorf("could not open file %s: %w", localPath, err)
+		return fmt.Errorf("failed to get object %s: %w", objectName, err)
+	}
+	defer object.Close()
+
+	// Cria ou sobrescreve o arquivo local
+	file, err := os.Create(localPath)
+	if err != nil {
+		return fmt.Errorf("could not create local file %s: %w", localPath, err)
 	}
 	defer file.Close()
 
-	stat, err := file.Stat()
+	// Copia o conteúdo do objeto para o arquivo local
+	_, err = io.Copy(file, object)
 	if err != nil {
-		return fmt.Errorf("could not stat file %s: %w", localPath, err)
-	}
-
-	_, err = cbu.client.PutObject(ctx, cbu.bucketName, objectName, file, stat.Size(), minio.PutObjectOptions{
-		ContentType: "application/x-ndjson",
-	})
-	if err != nil {
-		return fmt.Errorf("failed to upload file to minio: %w", err)
+		return fmt.Errorf("failed to copy object to file: %w", err)
 	}
 
 	return nil
-}
-
-func (cbu *ChargebackUploader) GetBucketName() string {
-	return cbu.bucketName
 }

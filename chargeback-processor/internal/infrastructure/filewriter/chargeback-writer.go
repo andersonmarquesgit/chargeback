@@ -3,34 +3,38 @@ package filewriter
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"os"
 	"path/filepath"
 	"processor/internal/domain/models"
 	"processor/internal/infrastructure/objectstorage"
+	"processor/internal/infrastructure/rabbitmq/producers"
 	"sync"
 	"time"
 )
 
 type ChargebackWriter struct {
-	mu            sync.Mutex
-	currentFile   *os.File
-	currentFileID string
-	records       []models.Chargeback
-	lastFlush     time.Time
-	maxRecords    int
-	maxDuration   time.Duration
-	directory     string
-	uploader      objectstorage.Uploader
+	mu                 sync.Mutex
+	currentFile        *os.File
+	currentFileID      string
+	records            []models.Chargeback
+	lastFlush          time.Time
+	maxRecords         int
+	maxDuration        time.Duration
+	directory          string
+	uploader           objectstorage.Uploader
+	batchEventProducer *producers.Producer
 }
 
-func NewChargebackWriter(directory string, maxRecords int, maxDuration time.Duration, uploader *objectstorage.Uploader) *ChargebackWriter {
+func NewChargebackWriter(directory string, maxRecords int, maxDuration time.Duration, uploader objectstorage.Uploader, producer *producers.Producer) *ChargebackWriter {
 	return &ChargebackWriter{
-		records:     make([]models.Chargeback, 0),
-		maxRecords:  maxRecords,
-		maxDuration: maxDuration,
-		directory:   directory,
-		lastFlush:   time.Now(),
-		uploader:    *uploader,
+		records:            make([]models.Chargeback, 0),
+		maxRecords:         maxRecords,
+		maxDuration:        maxDuration,
+		directory:          directory,
+		lastFlush:          time.Now(),
+		uploader:           uploader,
+		batchEventProducer: producer,
 	}
 }
 
@@ -73,6 +77,10 @@ func (w *ChargebackWriter) rotateFile() error {
 		if err := w.uploader.UploadFile(fullPath, w.currentFileID); err != nil {
 			return fmt.Errorf("failed to upload chargeback file to object storage: %w", err)
 		}
+
+		if err := w.notifyBatchReady(w.currentFileID, len(w.records)); err != nil {
+			return fmt.Errorf("failed to publish batch ready event: %w", err)
+		}
 	}
 
 	// Garante que o diretório existe
@@ -96,4 +104,21 @@ func (w *ChargebackWriter) rotateFile() error {
 	w.lastFlush = time.Now()
 
 	return nil
+}
+
+func (w *ChargebackWriter) notifyBatchReady(fileID string, recordCount int) error {
+	event := map[string]interface{}{
+		"file_id":      fileID,
+		"file_url":     fmt.Sprintf("http://minio:9000/%s/%s", w.uploader.GetBucketName(), fileID),
+		"created_at":   time.Now().UTC().Format(time.RFC3339),
+		"record_count": recordCount,
+	}
+
+	payload, err := json.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("could not marshal batch ready event: %w", err)
+	}
+
+	traceID := uuid.NewString()
+	return w.batchEventProducer.PublishChargebackBatchEvent(payload, traceID)
 }
