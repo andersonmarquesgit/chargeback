@@ -23,7 +23,7 @@ func (h *ChargebackOpenedEventHandler) HandleChargebackOpenedEvent(msg amqp.Deli
 	// Process the message
 	err := h.ChargebackOpenedEventUseCase.Process(msg)
 	if err != nil {
-		log.Printf("Failed to process send email event: %v", err)
+		log.Printf("Failed to process chargeback opened event: %v", err)
 		return err
 	}
 	return nil

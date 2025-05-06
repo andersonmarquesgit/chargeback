@@ -16,27 +16,27 @@ func NewChargebackRepositoryCassandra(session *gocql.Session) *ChargebackReposit
 	}
 }
 
-func (r *ChargebackRepositoryCassandra) CreateChargeback(userID, transactionID, reason string) (*models.Chargeback, error) {
-	now := time.Now()
-
+func (r *ChargebackRepositoryCassandra) CreateChargeback(userID, transactionID, reason, fileID string, createdAt, updatedAt time.Time) (*models.Chargeback, error) {
 	cb := &models.Chargeback{
 		UserID:        userID,
 		TransactionID: transactionID,
 		Status:        "opened",
 		Reason:        reason,
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		FileID:        fileID,
+		CreatedAt:     createdAt,
+		UpdatedAt:     updatedAt,
 	}
 
 	query := `INSERT INTO chargebacks_by_user_transaction 
-		(user_id, transaction_id, status, reason, created_at, updated_at) 
-		VALUES (?, ?, ?, ?, ?, ?)`
+		(user_id, transaction_id, status, reason, file_id, created_at, updated_at) 
+		VALUES (?, ?, ?, ?, ?, ?, ?)`
 
 	err := r.session.Query(query,
 		cb.UserID,
 		cb.TransactionID,
 		cb.Status,
 		cb.Reason,
+		cb.FileID,
 		cb.CreatedAt,
 		cb.UpdatedAt,
 	).Exec()

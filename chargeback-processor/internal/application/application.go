@@ -6,6 +6,7 @@ import (
 	"github.com/newrelic/go-agent/v3/newrelic"
 	"log"
 	"processor/internal/config"
+	"processor/internal/infrastructure/filewriter"
 	"processor/internal/infrastructure/logging"
 	"processor/internal/infrastructure/rabbitmq"
 	"processor/internal/infrastructure/rabbitmq/consumers"
@@ -59,8 +60,11 @@ func NewApplication(cfg *config.Config) *Application {
 	// Initialize repositories
 	chargebackRepository := cassandra.NewChargebackRepositoryCassandra(cassandraSession)
 
+	// Initialize writer
+	chargebackWriter := filewriter.NewChargebackWriter("/tmp/chargebacks", cfg.Chargeback.MaxRecords, cfg.Chargeback.MaxDuration)
+
 	// Initializer use cases
-	chargebackOpenedEventUseCase := usecases.NewChargebackOpenedEventUseCase(chargebackRepository)
+	chargebackOpenedEventUseCase := usecases.NewChargebackOpenedEventUseCase(chargebackRepository, chargebackWriter)
 	useCases := usecases.NewUseCases(chargebackOpenedEventUseCase)
 
 	// Initializer specific handlers

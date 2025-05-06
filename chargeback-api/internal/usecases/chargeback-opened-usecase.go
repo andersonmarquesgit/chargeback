@@ -6,6 +6,9 @@ import (
 	"api/internal/infrastructure/rabbitmq/producers"
 	"api/internal/infrastructure/repositories/cassandra"
 	"api/internal/interfaces/dto"
+	"api/internal/interfaces/events"
+	"encoding/json"
+	"fmt"
 )
 
 type ChargebackOpenedUseCase struct {
@@ -21,8 +24,6 @@ func NewChargebackOpenedUseCase(repository *cassandra.ChargebackRepositoryCassan
 }
 
 func (uc *ChargebackOpenedUseCase) CreateChargeback(req dto.ChargebackRequest, traceID string) (*models.Chargeback, error) {
-	chargeback := models.NewChargeback(req.UserID, req.TransactionID, req.Reason)
-
 	// Verificamos se o chargeback já existe (CQRS - Query)
 	logging.Info("Verifying if chargeback already exists")
 	chargebackExists, err := uc.ChargebackRepositoryCassandra.GetChargeback(req.UserID, req.TransactionID)
@@ -33,26 +34,29 @@ func (uc *ChargebackOpenedUseCase) CreateChargeback(req dto.ChargebackRequest, t
 	// Caso o chargeback não exista, criamos o evento para o processor criar (CQRS - Command)
 	if chargebackExists != nil {
 		logging.Info("Chargeback already exists")
-		return chargeback, nil
+		chargebackExists.Exists = true
+		return chargebackExists, nil
 	}
 
-	logging.Info("Chargeback not exists, send to processor")
-	// Criação do payload e encriptação da senha do cliente para publicação do evento de criação do usuário
-	//chargebackOpenedEventPayload, err := events.NewChargebackOpenedEvent(chargeback)
-	//if err != nil {
-	//	return nil, fmt.Errorf("could not create chargeback opened event payload: %v", err)
-	//}
-	//
-	//message, err := json.Marshal("")
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//// Publicação do evento de chargeback opened
-	//err = uc.Producer.PublishChargebackOpenedEvent(message, req.UserID, req.TransactionID, traceID)
-	//if err != nil {
-	//	return nil, err
-	//}
+	logging.Info("Chargeback not exists, send event to processor")
+
+	chargeback := models.NewChargeback(req.UserID, req.TransactionID, req.Reason)
+
+	chargebackOpenedEventPayload, err := events.NewChargebackOpenedEvent(chargeback)
+	if err != nil {
+		return nil, fmt.Errorf("could not create chargeback opened event payload: %v", err)
+	}
+
+	message, err := json.Marshal(chargebackOpenedEventPayload)
+	if err != nil {
+		return nil, err
+	}
+
+	// Publicação do evento de chargeback opened
+	err = uc.Producer.PublishChargebackOpenedEvent(message, req.UserID, req.TransactionID, traceID)
+	if err != nil {
+		return nil, err
+	}
 
 	return chargeback, nil
 }

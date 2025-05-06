@@ -52,16 +52,23 @@ func (h *ChargebackOpenedHandler) CreateChargeback(w http.ResponseWriter, r *htt
 	traceID := r.Context().Value("request-trace-id").(string)
 
 	// Create chargeback
-	_, err := h.chargebackOpenedUseCase.CreateChargeback(req, traceID)
+	chargeback, err := h.chargebackOpenedUseCase.CreateChargeback(req, traceID)
 	if err != nil {
 		presentation.ErrorJSON(w, err, http.StatusInternalServerError)
 		return
 	}
 
+	status := http.StatusAccepted
+	message := "Chargeback sent to processor successfully"
+	if chargeback.Exists {
+		status = http.StatusOK
+		message = "Chargeback already exists"
+	}
+
 	// Return the chargeback send to processor
-	presentation.WriteJSON(w, http.StatusAccepted, presentation.JSONResponse{
+	presentation.WriteJSON(w, status, presentation.JSONResponse{
 		Error:   false,
-		Message: "Chargeback send to processor with successfully",
+		Message: message,
 		Data:    nil,
 	})
 }

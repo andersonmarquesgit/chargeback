@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS chargebacks_by_user_transaction (
     transaction_id TEXT,
     status TEXT,
     reason TEXT,
-    file_id UUID,
+    file_id TEXT,
     sent_at TIMESTAMP,
     created_at TIMESTAMP,
     updated_at TIMESTAMP,

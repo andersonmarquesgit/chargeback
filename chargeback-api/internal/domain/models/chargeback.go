@@ -9,13 +9,14 @@ type Chargeback struct {
 	UserID        string    `json:"user_id"`
 	TransactionID string    `json:"transaction_id"`
 	Reason        string    `json:"reason"`
+	Exists        bool      `json:"exists"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 func NewChargeback(userID, transactionID, reason string) *Chargeback {
 	return &Chargeback{
-		Status:        "pending",
+		Status:        "opened",
 		UserID:        userID,
 		TransactionID: transactionID,
 		Reason:        reason,

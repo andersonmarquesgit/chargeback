@@ -14,6 +14,7 @@ type Config struct {
 	Logger          LoggerConfig
 	SecretKeyConfig SecretKeyConfig
 	NewRelic        NewRelicConfig
+	Chargeback      ChargebackConfig
 }
 
 type ServerConfig struct {
@@ -43,6 +44,12 @@ type NewRelicConfig struct {
 	LicenseKey string
 }
 
+type ChargebackConfig struct {
+	OutputDir   string
+	MaxRecords  int
+	MaxDuration time.Duration
+}
+
 func LoadConfig() *Config {
 	return &Config{
 		Server: ServerConfig{
@@ -62,6 +69,11 @@ func LoadConfig() *Config {
 		},
 		NewRelic: NewRelicConfig{
 			LicenseKey: getEnv("NEW_RELIC_LICENSE_KEY", ""),
+		},
+		Chargeback: ChargebackConfig{
+			OutputDir:   getEnv("CHARGEBACK_OUTPUT_DIR", "/tmp/chargebacks"),
+			MaxDuration: 5 * time.Hour,
+			MaxRecords:  100,
 		},
 	}
 }
