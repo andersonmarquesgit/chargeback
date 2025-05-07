@@ -121,6 +121,7 @@ func (w *ChargebackWriter) notifyBatchReady(fileID string, recordCount int) erro
 		"file_url":     fmt.Sprintf("http://minio:9000/%s/%s", w.uploader.GetBucketName(), fileID),
 		"created_at":   time.Now().UTC().Format(time.RFC3339),
 		"record_count": recordCount,
+		"status":       "ready",
 	}
 
 	payload, err := json.Marshal(event)

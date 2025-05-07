@@ -90,3 +90,33 @@ func (r *BatchFilesRepositoryPostgres) InsertBatchFile(file *models.BatchFile) e
 
 	return nil
 }
+
+func (r *BatchFilesRepositoryPostgres) MarkAsSent(fileID string) error {
+	query := `
+		UPDATE batch_files
+		SET status = 'sent',
+			sent_at = NOW(),
+			last_attempt_at = NOW()
+		WHERE file_id = $1
+	`
+	_, err := r.DB.Exec(query, fileID)
+	if err != nil {
+		return fmt.Errorf("could not mark file as sent: %w", err)
+	}
+	return nil
+}
+
+func (r *BatchFilesRepositoryPostgres) MarkAsFailed(fileID string) error {
+	query := `
+		UPDATE batch_files
+		SET status = 'failed',
+			retry_count = retry_count + 1,
+			last_attempt_at = NOW()
+		WHERE file_id = $1
+	`
+	_, err := r.DB.Exec(query, fileID)
+	if err != nil {
+		return fmt.Errorf("could not mark file as failed: %w", err)
+	}
+	return nil
+}

@@ -55,6 +55,25 @@ services:
       - batch_files_data:/var/lib/postgresql/data
       - ./db-init/postgres/schema.sql:/docker-entrypoint-initdb.d/init.sql
 
+  mastercard:
+    image: stilliard/pure-ftpd:hardened
+    container_name: mastercard
+    ports:
+      - "21:21"
+      - "30000-30009:30000-30009"
+    environment:
+      - FTP_USER_NAME=admin
+      - FTP_USER_PASS=admin
+      - FTP_USER_HOME=/home/ftpusers/admin
+      - PASV_MIN_PORT=30000
+      - PASV_MAX_PORT=30009
+      - PUBLICHOST=127.0.0.1
+    volumes:
+      - mastercard-data:/home/ftpusers
+
+
+
+
 #  chargeback-api:
 #    build:
 #      context: ./../chargeback-api
@@ -81,3 +100,4 @@ volumes:
   rabbitmq-data:
   minio-data:
   batch_files_data:
+  mastercard-data:

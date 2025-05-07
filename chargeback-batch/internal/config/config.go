@@ -14,6 +14,7 @@ type Config struct {
 	SecretKeyConfig SecretKeyConfig
 	NewRelic        NewRelicConfig
 	Minio           MinioConfig
+	FTP             FTPConfig
 }
 
 type ServerConfig struct {
@@ -50,6 +51,13 @@ type MinioConfig struct {
 	UseSSL     bool
 }
 
+type FTPConfig struct {
+	Host     string
+	Port     int
+	Username string
+	Password string
+}
+
 func LoadConfig() *Config {
 	return &Config{
 		Server: ServerConfig{
@@ -75,6 +83,12 @@ func LoadConfig() *Config {
 			SecretKey:  getEnv("MINIO_SECRET_KEY", "password"),
 			UseSSL:     false, // ou converter com strconv.ParseBool
 			BucketName: getEnv("MINIO_BUCKET_NAME", "chargebacks"),
+		},
+		FTP: FTPConfig{
+			Host:     getEnv("FTP_HOST", "localhost"),
+			Port:     getEnvAsInt("FTP_PORT", 21),
+			Username: getEnv("FTP_USER", "admin"),
+			Password: getEnv("FTP_PASS", "admin"),
 		},
 	}
 }
