@@ -16,6 +16,15 @@ services:
       - CASSANDRA_RPC_ADDRESS=0.0.0.0
       - CASSANDRA_ENDPOINT_SNITCH=GossipingPropertyFileSnitch
 
+  cassandra-init:
+    image: cassandra:4.1
+    depends_on:
+      - cassandra
+    volumes:
+      - ./db-init/cassandra/schema.cql:/docker-entrypoint-initdb.d/schema.cql
+      - ./db-init/cassandra/init.sh:/docker-entrypoint-initdb.d/init.sh
+    entrypoint: [ "/bin/sh", "/docker-entrypoint-initdb.d/init.sh" ]
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq

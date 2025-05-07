@@ -40,6 +40,7 @@ type SecretKeyConfig struct {
 
 type NewRelicConfig struct {
 	LicenseKey string
+	Enabled    bool
 }
 
 func LoadConfig() *Config {
@@ -61,6 +62,7 @@ func LoadConfig() *Config {
 		},
 		NewRelic: NewRelicConfig{
 			LicenseKey: getEnv("NEW_RELIC_LICENSE_KEY", ""),
+			Enabled:    getEnvAsBool("NEW_RELIC_ENABLED", false),
 		},
 	}
 }
@@ -91,4 +93,16 @@ func getEnvAsInt(name string, defaultVal int) int {
 		}
 	}
 	return defaultVal
+}
+
+func getEnvAsBool(name string, defaultVal bool) bool {
+	valStr := getEnv(name, "")
+	if valStr == "" {
+		return defaultVal
+	}
+	val, err := strconv.ParseBool(valStr)
+	if err != nil {
+		return defaultVal
+	}
+	return val
 }

@@ -15,14 +15,16 @@ type CustomFormatter struct {
 
 // InitializeLogger configura o logger para usar o New Relic e o logrus
 func InitializeLogger(newRelicApp *newrelic.Application) {
-	nrlogrusFormatter := nrlogrus.NewFormatter(newRelicApp, &logrus.TextFormatter{
-		TimestampFormat: "2006/01/02 15:04:05.000",
-	})
-	Logger.SetFormatter(nrlogrusFormatter)
-	Logger.SetLevel(logrus.InfoLevel)
+	if newRelicApp != nil {
+		nrlogrusFormatter := nrlogrus.NewFormatter(newRelicApp, &logrus.TextFormatter{
+			TimestampFormat: "2006/01/02 15:04:05.000",
+		})
+		Logger.SetFormatter(nrlogrusFormatter)
+		Logger.SetLevel(logrus.InfoLevel)
 
-	log.SetOutput(Logger.Writer())
-	log.SetFlags(0)
+		log.SetOutput(Logger.Writer())
+		log.SetFlags(0)
+	}
 }
 
 func SetFields(fields logrus.Fields) {

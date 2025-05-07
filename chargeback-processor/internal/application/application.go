@@ -29,14 +29,26 @@ type Application struct {
 }
 
 func NewApplication(cfg *config.Config) *Application {
-	newRelicApp, err := newrelic.NewApplication(
-		newrelic.ConfigAppName("chargeback-processor"),
-		newrelic.ConfigLicense(cfg.NewRelic.LicenseKey),
-		newrelic.ConfigDistributedTracerEnabled(true),
-		newrelic.ConfigAppLogForwardingEnabled(true),
-	)
-	if err != nil {
-		log.Fatalf("Failed to create New Relic application: %v", err)
+	var newRelicApp *newrelic.Application
+	var err error
+
+	if cfg.NewRelic.Enabled && cfg.NewRelic.LicenseKey != "" {
+		newRelicApp, err = newrelic.NewApplication(
+			newrelic.ConfigAppName("chargeback-api"),
+			newrelic.ConfigLicense(cfg.NewRelic.LicenseKey),
+			newrelic.ConfigDistributedTracerEnabled(true),
+			newrelic.ConfigAppLogForwardingEnabled(true),
+		)
+		if err != nil {
+			log.Fatalf("Failed to create New Relic application: %v", err)
+		}
+
+		logging.InitializeLogger(newRelicApp)
+		logging.Logger.Info("Application started with New Relic integration")
+
+	} else {
+		logging.InitializeLogger(nil)
+		logging.Logger.Info("New Relic is disabled. Starting without New Relic integration")
 	}
 
 	// Initialize the global logger

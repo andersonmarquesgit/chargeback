@@ -43,6 +43,7 @@ type SecretKeyConfig struct {
 
 type NewRelicConfig struct {
 	LicenseKey string
+	Enabled    bool
 }
 
 type ChargebackConfig struct {
@@ -78,6 +79,7 @@ func LoadConfig() *Config {
 		},
 		NewRelic: NewRelicConfig{
 			LicenseKey: getEnv("NEW_RELIC_LICENSE_KEY", ""),
+			Enabled:    getEnvAsBool("NEW_RELIC_ENABLED", false),
 		},
 		Chargeback: ChargebackConfig{
 			OutputDir:   getEnv("CHARGEBACK_OUTPUT_DIR", "/tmp/chargebacks"),
@@ -120,4 +122,16 @@ func getEnvAsInt(name string, defaultVal int) int {
 		}
 	}
 	return defaultVal
+}
+
+func getEnvAsBool(name string, defaultVal bool) bool {
+	valStr := getEnv(name, "")
+	if valStr == "" {
+		return defaultVal
+	}
+	val, err := strconv.ParseBool(valStr)
+	if err != nil {
+		return defaultVal
+	}
+	return val
 }
