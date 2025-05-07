@@ -24,7 +24,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/customer": {
+        "/v1/chargebacks": {
             "post": {
                 "description": "Verify if the chargeback exists using idempotency with user id and transaction id. Case not exists send a message to the RabbitMQ for create a new chargeback in the processor.",
                 "consumes": [
@@ -36,7 +36,7 @@ const docTemplate = `{
                 "tags": [
                     "chargeback"
                 ],
-                "summary": "Create a chargeback",
+                "summary": "Open a chargeback for user and transaction",
                 "parameters": [
                     {
                         "description": "Data of the chargeback",
@@ -109,10 +109,10 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8081",
+	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "Authentication Service API",
+	Title:            "Chargeback API",
 	Description:      "This is Chargeback API. Is possible to open a new chargeback.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,

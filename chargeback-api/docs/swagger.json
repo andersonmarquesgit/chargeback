@@ -2,7 +2,7 @@
     "swagger": "2.0",
     "info": {
         "description": "This is Chargeback API. Is possible to open a new chargeback.",
-        "title": "Authentication Service API",
+        "title": "Chargeback API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
@@ -15,10 +15,10 @@
         },
         "version": "1.0"
     },
-    "host": "localhost:8081",
+    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
-        "/customer": {
+        "/v1/chargebacks": {
             "post": {
                 "description": "Verify if the chargeback exists using idempotency with user id and transaction id. Case not exists send a message to the RabbitMQ for create a new chargeback in the processor.",
                 "consumes": [
@@ -30,7 +30,7 @@
                 "tags": [
                     "chargeback"
                 ],
-                "summary": "Create a chargeback",
+                "summary": "Open a chargeback for user and transaction",
                 "parameters": [
                     {
                         "description": "Data of the chargeback",

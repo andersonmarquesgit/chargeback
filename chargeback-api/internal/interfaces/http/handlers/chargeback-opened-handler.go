@@ -23,7 +23,7 @@ func NewChargebackOpenedHandler(chargebackOpenedUseCase *usecases.ChargebackOpen
 }
 
 // CreateChargeback godoc
-// @Summary Create a chargeback
+// @Summary Open a chargeback for user and transaction
 // @Description Verify if the chargeback exists using idempotency with user id and transaction id. Case not exists send a message to the RabbitMQ for create a new chargeback in the processor.
 // @Tags chargeback
 // @Accept json
@@ -32,7 +32,7 @@ func NewChargebackOpenedHandler(chargebackOpenedUseCase *usecases.ChargebackOpen
 // @Success 202 {object} presentation.JSONResponse
 // @Failure 400 {object} presentation.JSONResponse
 // @Failure 500 {object} presentation.JSONResponse
-// @Router /customer [post]
+// @Router /v1/chargebacks [post]
 func (h *ChargebackOpenedHandler) CreateChargeback(w http.ResponseWriter, r *http.Request) {
 	var req dto.ChargebackRequest
 

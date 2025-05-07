@@ -1,4 +1,4 @@
-// @title Authentication Service API
+// @title Chargeback API
 // @version 1.0
 // @description This is Chargeback API. Is possible to open a new chargeback.
 // @termsOfService http://swagger.io/terms/
@@ -10,7 +10,7 @@
 // @license.name Apache 2.0
 // @license.url http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host localhost:8081
+// @host localhost:8080
 // @BasePath /
 package routes
 

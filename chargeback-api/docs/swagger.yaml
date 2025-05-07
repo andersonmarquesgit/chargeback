@@ -21,7 +21,7 @@ definitions:
       message:
         type: string
     type: object
-host: localhost:8081
+host: localhost:8080
 info:
   contact:
     email: support@swagger.io
@@ -32,10 +32,10 @@ info:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: Authentication Service API
+  title: Chargeback API
   version: "1.0"
 paths:
-  /customer:
+  /v1/chargebacks:
     post:
       consumes:
       - application/json
@@ -64,7 +64,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/presentation.JSONResponse'
-      summary: Create a chargeback
+      summary: Open a chargeback for user and transaction
       tags:
       - chargeback
 swagger: "2.0"
