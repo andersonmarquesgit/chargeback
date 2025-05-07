@@ -8,11 +8,10 @@ import (
 )
 
 type Config struct {
-	Server          ServerConfig
-	Database        DatabaseConfig
-	RabbitMQ        RabbitMQConfig
-	SecretKeyConfig SecretKeyConfig
-	NewRelic        NewRelicConfig
+	Server   ServerConfig
+	Database DatabaseConfig
+	RabbitMQ RabbitMQConfig
+	NewRelic NewRelicConfig
 }
 
 type ServerConfig struct {
@@ -34,10 +33,6 @@ type RabbitMQConfig struct {
 	URL string
 }
 
-type SecretKeyConfig struct {
-	SecretKey []byte
-}
-
 type NewRelicConfig struct {
 	LicenseKey string
 	Enabled    bool
@@ -56,9 +51,6 @@ func LoadConfig() *Config {
 		},
 		RabbitMQ: RabbitMQConfig{
 			URL: getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672"),
-		},
-		SecretKeyConfig: SecretKeyConfig{
-			SecretKey: []byte(getEnv("SECRET_KEY", "YSLjuEHpQIgYVaqOPo3Xxmq1iEhJ6msAdy0wO4yMWMbuGq8kGpDIeHDx99mW4smiFBPTSHIBE6NnMEBbAC2VJQ==")),
 		},
 		NewRelic: NewRelicConfig{
 			LicenseKey: getEnv("NEW_RELIC_LICENSE_KEY", ""),

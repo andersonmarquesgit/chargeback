@@ -18,11 +18,17 @@ func main() {
 	app := application.NewApplication(cfg)
 	defer app.Close()
 
-	go scheduler.StartScheduler(
-		app.UseCases.ChargebackBatchEventUseCase.BatchFilesRepository,
-		app.BatchFileDownloader,
-		app.FTPClient,
-	)
+	if cfg.Scheduler.Enabled {
+		log.Printf("Starting scheduler with interval: %v", cfg.Scheduler.Interval)
+		go scheduler.StartScheduler(
+			app.UseCases.ChargebackBatchEventUseCase.BatchFilesRepository,
+			app.BatchFileDownloader,
+			app.FTPClient,
+			cfg.Scheduler.Interval,
+		)
+	} else {
+		log.Println("Scheduler is disabled. Worker running without scheduler")
+	}
 
 	log.Println("Batch started and listening for batch events...")
 

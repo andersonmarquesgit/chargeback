@@ -25,6 +25,20 @@ services:
       - ./db-init/cassandra/init.sh:/docker-entrypoint-initdb.d/init.sh
     entrypoint: [ "/bin/sh", "/docker-entrypoint-initdb.d/init.sh" ]
 
+  batch-files:
+    image: postgres:15
+    container_name: batch-files
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: batch
+    volumes:
+      - batch_files_data:/var/lib/postgresql/data
+      - ./db-init/postgres/schema.sql:/docker-entrypoint-initdb.d/init.sql
+
   rabbitmq:
     image: rabbitmq:3-management
     container_name: rabbitmq
@@ -50,20 +64,6 @@ services:
     volumes:
       - minio-data:/data
 
-  batch-files:
-    image: postgres:15
-    container_name: batch-files
-    restart: always
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: admin
-      POSTGRES_DB: batch
-    volumes:
-      - batch_files_data:/var/lib/postgresql/data
-      - ./db-init/postgres/schema.sql:/docker-entrypoint-initdb.d/init.sql
-
   mastercard:
     image: stilliard/pure-ftpd:hardened
     container_name: mastercard
@@ -80,29 +80,83 @@ services:
     volumes:
       - mastercard-data:/home/ftpusers
 
+  chargeback-api:
+    build:
+      context: ./../chargeback-api
+      dockerfile: chargeback-api.dockerfile
+    container_name: chargeback-api
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      CASSANDRA_HOSTS: "cassandra"
+      CASSANDRA_KEYSPACE: "chargebacks"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      NEW_RELIC_LICENSE_KEY: ""
+      NEW_RELIC_ENABLED: false
+    depends_on:
+      - cassandra
+      - rabbitmq
 
+  chargeback-processor:
+    build:
+      context: ./../chargeback-processor
+      dockerfile: chargeback-processor.dockerfile
+    container_name: chargeback-processor
+    restart: always
+    environment:
+      CASSANDRA_HOSTS: "cassandra"
+      CASSANDRA_KEYSPACE: "chargebacks"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      NEW_RELIC_LICENSE_KEY: ""
+      NEW_RELIC_ENABLED: false
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: "admin"
+      MINIO_SECRET_KEY: "password"
+      MINIO_BUCKET_NAME: "chargebacks"
+      CHARGEBACK_OUTPUT_DIR: "/tmp/chargebacks"
+      CHARGEBACK_MAX_DURATION_VALUE: "30"
+      CHARGEBACK_MAX_DURATION_UNIT: "seconds" # ou "minutes", ou "hours"
+      CHARGEBACK_MAX_RECORDS: "5"
+    volumes:
+      - ./local-output:/tmp/chargebacks
+    depends_on:
+      - cassandra
+      - rabbitmq
+      - minio
 
+  chargeback-batch:
+    build:
+      context: ./../chargeback-batch
+      dockerfile: chargeback-batch.dockerfile
+    container_name: chargeback-batch
+    restart: always
+    environment:
+      DSN: "host=batch-files port=5432 user=admin password=admin dbname=batch sslmode=disable timezone=UTC connect_timeout=5"
+      RABBITMQ_URL: "amqp://guest:guest@rabbitmq:5672/"
+      MINIO_ENDPOINT: "minio:9000"
+      MINIO_ACCESS_KEY: "admin"
+      MINIO_SECRET_KEY: "password"
+      MINIO_BUCKET_NAME: "chargebacks"
+      FTP_HOST: "mastercard"
+      FTP_PORT: 21
+      FTP_USER: "admin"
+      FTP_PASS: "admin"
+      SCHEDULER_ENABLED: true
+      SCHEDULER_INTERVAL_VALUE: "1"
+      SCHEDULER_INTERVAL_UNIT: "minutes" # ou "minutes", ou "hours"
+      NEW_RELIC_LICENSE_KEY: ""
+      NEW_RELIC_ENABLED: false
+    volumes:
+      - batch_files_data:/var/lib/postgresql/data
+      - ./db-init/postgres/schema.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./local-batch-output:/tmp/chargebacks
+    depends_on:
+      - batch-files
+      - rabbitmq
+      - minio
+      - mastercard
 
-#  chargeback-api:
-#    build:
-#      context: ./../chargeback-api
-#      dockerfile: chargeback-api.dockerfile
-#    container_name: chargeback-api
-#    restart: always
-#    ports:
-#      - "8080:80"
-#    environment:
-#      CASSANDRA_HOSTS: "cassandra"
-#      CASSANDRA_KEYSPACE: "chargebacks"
-#      RABBITMQ_URL: "amqp://admin:admin@rabbitmq:5672/"
-#      NEW_RELIC_LICENSE_KEY: ""
-#      S3_ENDPOINT: "http://minio:9000"
-#      S3_ACCESS_KEY: "admin"
-#      S3_SECRET_KEY: "password"
-#    depends_on:
-#      - cassandra
-#      - rabbitmq
-#      - minio
 
 volumes:
   cassandra-data:

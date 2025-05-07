@@ -8,14 +8,13 @@ import (
 )
 
 type Config struct {
-	Server          ServerConfig
-	Database        DatabaseConfig
-	RabbitMQ        RabbitMQConfig
-	Logger          LoggerConfig
-	SecretKeyConfig SecretKeyConfig
-	NewRelic        NewRelicConfig
-	Chargeback      ChargebackConfig
-	Minio           MinioConfig
+	Server     ServerConfig
+	Database   DatabaseConfig
+	RabbitMQ   RabbitMQConfig
+	Logger     LoggerConfig
+	NewRelic   NewRelicConfig
+	Chargeback ChargebackConfig
+	Minio      MinioConfig
 }
 
 type ServerConfig struct {
@@ -35,10 +34,6 @@ type LoggerConfig struct {
 
 type RabbitMQConfig struct {
 	URL string
-}
-
-type SecretKeyConfig struct {
-	SecretKey []byte
 }
 
 type NewRelicConfig struct {
@@ -74,17 +69,18 @@ func LoadConfig() *Config {
 		RabbitMQ: RabbitMQConfig{
 			URL: getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672"),
 		},
-		SecretKeyConfig: SecretKeyConfig{
-			SecretKey: []byte(getEnv("SECRET_KEY", "YSLjuEHpQIgYVaqOPo3Xxmq1iEhJ6msAdy0wO4yMWMbuGq8kGpDIeHDx99mW4smiFBPTSHIBE6NnMEBbAC2VJQ==")),
-		},
 		NewRelic: NewRelicConfig{
 			LicenseKey: getEnv("NEW_RELIC_LICENSE_KEY", ""),
 			Enabled:    getEnvAsBool("NEW_RELIC_ENABLED", false),
 		},
 		Chargeback: ChargebackConfig{
-			OutputDir:   getEnv("CHARGEBACK_OUTPUT_DIR", "/tmp/chargebacks"),
-			MaxDuration: 30 * time.Second,
-			MaxRecords:  5,
+			OutputDir: getEnv("CHARGEBACK_OUTPUT_DIR", "/tmp/chargebacks"),
+			MaxDuration: getEnvAsDurationWithUnit(
+				"CHARGEBACK_MAX_DURATION_VALUE",
+				"CHARGEBACK_MAX_DURATION_UNIT",
+				30*time.Second,
+			),
+			MaxRecords: getEnvAsInt("CHARGEBACK_MAX_RECORDS", 5),
 		},
 		Minio: MinioConfig{
 			Endpoint:   getEnv("MINIO_ENDPOINT", "localhost:9000"),
@@ -134,4 +130,29 @@ func getEnvAsBool(name string, defaultVal bool) bool {
 		return defaultVal
 	}
 	return val
+}
+
+func getEnvAsDurationWithUnit(valueKey string, unitKey string, defaultVal time.Duration) time.Duration {
+	valueStr := getEnv(valueKey, "")
+	unitStr := strings.ToLower(getEnv(unitKey, ""))
+
+	if valueStr == "" || unitStr == "" {
+		return defaultVal
+	}
+
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		return defaultVal
+	}
+
+	switch unitStr {
+	case "seconds", "second", "s":
+		return time.Duration(value) * time.Second
+	case "minutes", "minute", "m":
+		return time.Duration(value) * time.Minute
+	case "hours", "hour", "h":
+		return time.Duration(value) * time.Hour
+	default:
+		return defaultVal
+	}
 }

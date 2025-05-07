@@ -9,8 +9,8 @@ import (
 	"time"
 )
 
-func StartScheduler(repo repositories.BatchFilesRepository, downloader objectstorage.Downloader, ftpClient ftp.Client) {
-	ticker := time.NewTicker(1 * time.Minute)
+func StartScheduler(repo repositories.BatchFilesRepository, downloader objectstorage.Downloader, ftpClient ftp.Client, interval time.Duration) {
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
@@ -29,7 +29,7 @@ func processBatchFiles(repo repositories.BatchFilesRepository, downloader object
 	}
 
 	for _, f := range files {
-		localPath := filepath.Join("/tmp", f.FileID)
+		localPath := filepath.Join("/tmp/chargebacks", f.FileID)
 		err := downloader.DownloadFile(localPath, f.FileID)
 		if err != nil {
 			logging.Infof("Failed to download file %s: %v", f.FileID, err)

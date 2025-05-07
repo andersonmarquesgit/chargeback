@@ -3,18 +3,19 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
 type Config struct {
-	Server          ServerConfig
-	Database        DatabaseConfig
-	RabbitMQ        RabbitMQConfig
-	Logger          LoggerConfig
-	SecretKeyConfig SecretKeyConfig
-	NewRelic        NewRelicConfig
-	Minio           MinioConfig
-	FTP             FTPConfig
+	Server    ServerConfig
+	Database  DatabaseConfig
+	RabbitMQ  RabbitMQConfig
+	Logger    LoggerConfig
+	NewRelic  NewRelicConfig
+	Minio     MinioConfig
+	FTP       FTPConfig
+	Scheduler SchedulerConfig
 }
 
 type ServerConfig struct {
@@ -33,10 +34,6 @@ type LoggerConfig struct {
 
 type RabbitMQConfig struct {
 	URL string
-}
-
-type SecretKeyConfig struct {
-	SecretKey []byte
 }
 
 type NewRelicConfig struct {
@@ -59,6 +56,11 @@ type FTPConfig struct {
 	Password string
 }
 
+type SchedulerConfig struct {
+	Enabled  bool
+	Interval time.Duration
+}
+
 func LoadConfig() *Config {
 	return &Config{
 		Server: ServerConfig{
@@ -71,9 +73,6 @@ func LoadConfig() *Config {
 		},
 		RabbitMQ: RabbitMQConfig{
 			URL: getEnv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672"),
-		},
-		SecretKeyConfig: SecretKeyConfig{
-			SecretKey: []byte(getEnv("SECRET_KEY", "YSLjuEHpQIgYVaqOPo3Xxmq1iEhJ6msAdy0wO4yMWMbuGq8kGpDIeHDx99mW4smiFBPTSHIBE6NnMEBbAC2VJQ==")),
 		},
 		NewRelic: NewRelicConfig{
 			LicenseKey: getEnv("NEW_RELIC_LICENSE_KEY", ""),
@@ -91,6 +90,14 @@ func LoadConfig() *Config {
 			Port:     getEnvAsInt("FTP_PORT", 21),
 			Username: getEnv("FTP_USER", "admin"),
 			Password: getEnv("FTP_PASS", "admin"),
+		},
+		Scheduler: SchedulerConfig{
+			Enabled: getEnvAsBool("SCHEDULER_ENABLED", true),
+			Interval: getEnvAsDurationWithUnit(
+				"SCHEDULER_INTERVAL_VALUE",
+				"SCHEDULER_INTERVAL_UNIT",
+				1*time.Minute, // default de 1 min
+			),
 		},
 	}
 }
@@ -133,4 +140,29 @@ func getEnvAsBool(name string, defaultVal bool) bool {
 		return defaultVal
 	}
 	return val
+}
+
+func getEnvAsDurationWithUnit(valueKey string, unitKey string, defaultVal time.Duration) time.Duration {
+	valueStr := getEnv(valueKey, "")
+	unitStr := strings.ToLower(getEnv(unitKey, ""))
+
+	if valueStr == "" || unitStr == "" {
+		return defaultVal
+	}
+
+	value, err := strconv.Atoi(valueStr)
+	if err != nil {
+		return defaultVal
+	}
+
+	switch unitStr {
+	case "seconds", "second", "s":
+		return time.Duration(value) * time.Second
+	case "minutes", "minute", "m":
+		return time.Duration(value) * time.Minute
+	case "hours", "hour", "h":
+		return time.Duration(value) * time.Hour
+	default:
+		return defaultVal
+	}
 }

@@ -49,8 +49,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "202": {
+                        "description": "Accepted",
                         "schema": {
                             "$ref": "#/definitions/presentation.JSONResponse"
                         }
@@ -116,6 +116,8 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "This is Chargeback API. Is possible to open a new chargeback.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
+	LeftDelim:        "{{",
+	RightDelim:       "}}",
 }
 
 func init() {
