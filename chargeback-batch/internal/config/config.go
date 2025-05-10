@@ -57,8 +57,9 @@ type FTPConfig struct {
 }
 
 type SchedulerConfig struct {
-	Enabled  bool
-	Interval time.Duration
+	Enabled        bool
+	Interval       time.Duration
+	MaxFilesPerDay int
 }
 
 func LoadConfig() *Config {
@@ -98,6 +99,7 @@ func LoadConfig() *Config {
 				"SCHEDULER_INTERVAL_UNIT",
 				1*time.Minute, // default de 1 min
 			),
+			MaxFilesPerDay: getEnvAsInt("BATCH_MAX_FILES_PER_DAY", 4),
 		},
 	}
 }

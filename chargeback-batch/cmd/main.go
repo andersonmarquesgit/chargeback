@@ -19,12 +19,13 @@ func main() {
 	defer app.Close()
 
 	if cfg.Scheduler.Enabled {
-		log.Printf("Starting scheduler with interval: %v", cfg.Scheduler.Interval)
+		log.Printf("Starting schedule with settings: Enabled=%v, Interval=%v, MaxFilesPerDay=%d\"",
+			cfg.Scheduler.Enabled, cfg.Scheduler.Interval, cfg.Scheduler.MaxFilesPerDay)
 		go scheduler.StartScheduler(
 			app.UseCases.ChargebackBatchEventUseCase.BatchFilesRepository,
 			app.BatchFileDownloader,
 			app.FTPClient,
-			cfg.Scheduler.Interval,
+			cfg.Scheduler,
 		)
 	} else {
 		log.Println("Scheduler is disabled. Worker running without scheduler")

@@ -20,7 +20,7 @@
     "paths": {
         "/v1/chargebacks": {
             "post": {
-                "description": "Verify if the chargeback exists using idempotency with user id and transaction id. Case not exists send a message to the RabbitMQ for create a new chargeback in the processor.",
+                "description": "Verify if the chargeback exists using idempotency with user ID and transaction ID.\u003cbr\u003e\u003cbr\u003e- **If it does not exist:** Sends a message to the queue (`chargeback-opened`) to create a new chargeback in the processor. \u003cbr\u003e\u003cbr\u003e- **Returns:** \u003cbr\u003e\u003cbr\u003e`202 Accepted` \u003cbr\u003e\u003cbr\u003e`\"message\": \"Chargeback sent to processor successfully\"` \u003cbr\u003e\u003cbr\u003e\u003cbr\u003e- **If it already exists:** \u003cbr\u003e\u003cbr\u003e- **Returns:** \u003cbr\u003e\u003cbr\u003e`200 OK` \u003cbr\u003e\u003cbr\u003e`\"message\": \"Chargeback already exists\"`",
                 "consumes": [
                     "application/json"
                 ],
@@ -43,6 +43,12 @@
                     }
                 ],
                 "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/presentation.JSONResponse"
+                        }
+                    },
                     "202": {
                         "description": "Accepted",
                         "schema": {

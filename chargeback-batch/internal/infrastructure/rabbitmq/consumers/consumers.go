@@ -57,7 +57,7 @@ func (consumer *Consumer) setup() error {
 	}
 
 	for _, key := range consumer.RoutingKeys {
-		queueName := fmt.Sprintf("%s-%s", key, consumer.QueueSuffix)
+		queueName := fmt.Sprintf("%s%s", key, consumer.QueueSuffix)
 		_, err := rabbitmq.DeclareQueue(channel, queueName)
 		if err != nil {
 			return err
@@ -66,7 +66,7 @@ func (consumer *Consumer) setup() error {
 		if err != nil {
 			return err
 		}
-		log.Printf("Queue %s bound to key %s in exchange %s", queueName, key, consumer.Exchange)
+		log.Printf("Queue %s bound to exchange %s", queueName, consumer.Exchange)
 	}
 
 	return nil
@@ -80,7 +80,7 @@ func (consumer *Consumer) Listen(handler func(amqp.Delivery) error) error {
 	defer ch.Close()
 
 	for _, key := range consumer.RoutingKeys {
-		queueName := fmt.Sprintf("%s-%s", key, consumer.QueueSuffix)
+		queueName := fmt.Sprintf("%s%s", key, consumer.QueueSuffix)
 
 		// Bind the queue to the exchange with the routing key
 		err = ch.QueueBind(queueName, key, consumer.Exchange, false, nil)

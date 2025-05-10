@@ -39,9 +39,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Verify if the chargeback exists using idempotency with user id
-        and transaction id. Case not exists send a message to the RabbitMQ for create
-        a new chargeback in the processor.
+      description: 'Verify if the chargeback exists using idempotency with user ID
+        and transaction ID.<br><br>- **If it does not exist:** Sends a message to
+        the queue (`chargeback-opened`) to create a new chargeback in the processor.
+        <br><br>- **Returns:** <br><br>`202 Accepted` <br><br>`"message": "Chargeback
+        sent to processor successfully"` <br><br><br>- **If it already exists:** <br><br>-
+        **Returns:** <br><br>`200 OK` <br><br>`"message": "Chargeback already exists"`'
       parameters:
       - description: Data of the chargeback
         in: body
@@ -52,6 +55,10 @@ paths:
       produces:
       - application/json
       responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/presentation.JSONResponse'
         "202":
           description: Accepted
           schema:

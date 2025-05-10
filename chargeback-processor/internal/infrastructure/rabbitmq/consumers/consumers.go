@@ -57,7 +57,7 @@ func (consumer *Consumer) setup() error {
 	}
 
 	for _, key := range consumer.RoutingKeys {
-		queueName := fmt.Sprintf("%s-%s", key, consumer.QueueSuffix)
+		queueName := fmt.Sprintf("%s%s", key, consumer.QueueSuffix)
 		_, err := rabbitmq.DeclareQueue(channel, queueName)
 		if err != nil {
 			return err
@@ -66,7 +66,7 @@ func (consumer *Consumer) setup() error {
 		if err != nil {
 			return err
 		}
-		log.Printf("Queue %s bound to key %s in exchange %s", queueName, key, consumer.Exchange)
+		log.Printf("Queue %s bound to exchange %s", queueName, consumer.Exchange)
 	}
 
 	return nil
@@ -80,7 +80,7 @@ func (consumer *Consumer) Listen(handler func(amqp.Delivery) error) error {
 	defer ch.Close()
 
 	for _, key := range consumer.RoutingKeys {
-		queueName := fmt.Sprintf("%s-%s", key, consumer.QueueSuffix)
+		queueName := fmt.Sprintf("%s%s", key, consumer.QueueSuffix)
 
 		// Bind the queue to the exchange with the routing key
 		err = ch.QueueBind(queueName, key, consumer.Exchange, false, nil)
@@ -114,19 +114,12 @@ func (consumer *Consumer) Listen(handler func(amqp.Delivery) error) error {
 func addLoggerHooks(msg amqp.Delivery) {
 	// Extract the headers from the message
 	traceID, traceIDExists := msg.Headers["request-trace-id"]
-	country, countryExists := msg.Headers["country"]
 
-	// Adicionar traceID e country ao logger
+	// Adicionar traceID ao logger
 	if traceIDExists {
 		logging.Logger.AddHook(&logging.TraceIDHook{
 			TraceIDKey: "request-trace-id",
 			Context:    context.WithValue(context.Background(), "request-trace-id", traceID),
-		})
-	}
-	if countryExists {
-		logging.Logger.AddHook(&logging.CountryHook{
-			CountryKey: "country",
-			Context:    context.WithValue(context.Background(), "country", country),
 		})
 	}
 }

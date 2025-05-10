@@ -115,9 +115,9 @@ services:
       MINIO_SECRET_KEY: "password"
       MINIO_BUCKET_NAME: "chargebacks"
       CHARGEBACK_OUTPUT_DIR: "/tmp/chargebacks"
-      CHARGEBACK_MAX_DURATION_VALUE: "30"
-      CHARGEBACK_MAX_DURATION_UNIT: "seconds" # ou "minutes", ou "hours"
-      CHARGEBACK_MAX_RECORDS: "5"
+      CHARGEBACK_MAX_DURATION_VALUE: "1"
+      CHARGEBACK_MAX_DURATION_UNIT: "minutes" # "seconds" ou "minutes", ou "hours"
+      CHARGEBACK_MAX_RECORDS: "2500"
     volumes:
       - ./local-output:/tmp/chargebacks
     depends_on:
@@ -143,8 +143,9 @@ services:
       FTP_USER: "admin"
       FTP_PASS: "admin"
       SCHEDULER_ENABLED: true
-      SCHEDULER_INTERVAL_VALUE: "1"
-      SCHEDULER_INTERVAL_UNIT: "minutes" # ou "minutes", ou "hours"
+      SCHEDULER_INTERVAL_VALUE: "5"
+      SCHEDULER_INTERVAL_UNIT: "minutes" # "seconds" ou "minutes", ou "hours"
+      BATCH_MAX_FILES_PER_DAY: 4
       NEW_RELIC_LICENSE_KEY: ""
       NEW_RELIC_ENABLED: false
     volumes:

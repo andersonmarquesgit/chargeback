@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"batch/internal/config"
 	"batch/internal/domain/repositories"
 	"batch/internal/infrastructure/logging"
 	"batch/internal/infrastructure/objectstorage"
@@ -9,20 +10,20 @@ import (
 	"time"
 )
 
-func StartScheduler(repo repositories.BatchFilesRepository, downloader objectstorage.Downloader, ftpClient ftp.Client, interval time.Duration) {
-	ticker := time.NewTicker(interval)
+func StartScheduler(repo repositories.BatchFilesRepository, downloader objectstorage.Downloader, ftpClient ftp.Client, schedulerConfig config.SchedulerConfig) {
+	ticker := time.NewTicker(schedulerConfig.Interval)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			processBatchFiles(repo, downloader, ftpClient)
+			processBatchFiles(repo, downloader, ftpClient, schedulerConfig.MaxFilesPerDay)
 		}
 	}
 }
 
-func processBatchFiles(repo repositories.BatchFilesRepository, downloader objectstorage.Downloader, ftpClient ftp.Client) {
-	files, err := repo.GetBatchFilesOfDay()
+func processBatchFiles(repo repositories.BatchFilesRepository, downloader objectstorage.Downloader, ftpClient ftp.Client, maxFilesPerDay int) {
+	files, err := repo.GetBatchFilesOfDay(maxFilesPerDay)
 	if err != nil {
 		logging.Infof("Failed to fetch batch files: %v", err)
 		return

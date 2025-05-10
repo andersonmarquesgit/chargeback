@@ -17,17 +17,18 @@ func NewBatchFilesRepositoryPostgres(db *sql.DB) repositories.BatchFilesReposito
 	}
 }
 
-func (r *BatchFilesRepositoryPostgres) GetBatchFilesOfDay() ([]*models.BatchFile, error) {
+func (r *BatchFilesRepositoryPostgres) GetBatchFilesOfDay(batchMaxFiles int) ([]*models.BatchFile, error) {
 	query := `
 		SELECT file_id, file_url, created_at, record_count, status, sent_at, retry_count, last_attempt_at
 		FROM batch_files
 		WHERE 
-			(created_at::date = CURRENT_DATE)
-			AND (status = 'ready' OR status = 'failed')
+			(status = 'ready' OR status = 'failed')
 			AND retry_count <= 3
+		ORDER BY created_at ASC
+		LIMIT $1;
 	`
 
-	rows, err := r.DB.Query(query)
+	rows, err := r.DB.Query(query, batchMaxFiles)
 	if err != nil {
 		return nil, fmt.Errorf("could not query batch_files: %w", err)
 	}

@@ -10,7 +10,7 @@ export const options = {
 };
 
 export default function () {
-  const url = 'http://localhost/v1/chargebacks';
+  const url = 'http://localhost:8080/v1/chargebacks';
   const userId = `user_${Math.floor(Math.random() * 1000000)}`;          // Exemplo: user_1234
   const txnId = `txn_${Math.floor(Math.random() * 100000000)}`;          // Exemplo: txn_987654
 
